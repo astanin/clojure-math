@@ -44,20 +44,21 @@
   (to-vector [coll] "Converts a sequence to a Common Math's vector."))
 
 
-(defmacro seqable-toArray
-  "Derives a new class from base-class, and implements Sequable by
+(defmacro derive-seqable
+  "Derives a new class from base-class, and implements Seqable by
   using .toArray method of the parent."
   [base-class & init-args]
   `(proxy [~base-class clojure.lang.Seqable] [~@init-args]
-     (seq [] (seq (.toArray ~'this)))))
+     (seq [] (let [~(with-meta 'this {:tag `~base-class}) ~'this]
+               (seq (.toArray ~'this))))))
 
 
 (defn make-vector
   "Creates an Euclidean vector."
   ([^double x ^double y]
-     (seqable-toArray Vector2D x y))
+     (derive-seqable Vector2D x y))
   ([^double x ^double y ^double z]
-     (seqable-toArray Vector3D x y z)))
+     (derive-seqable Vector3D x y z)))
 
 
 (extend-protocol Vectorizable
@@ -68,18 +69,18 @@
 
 (extend-type (class (double-array 0))
   Vectorizable
-  (to-vector [arr]
-    (condp = (alength arr)
-      2 (seqable-toArray Vector2D arr)
-      3 (seqable-toArray Vector3D arr))))
+  (to-vector [^doubles arr]
+    (condp = (alength ^doubles arr)
+      2 (derive-seqable Vector2D arr)
+      3 (derive-seqable Vector3D arr))))
 
 
 (extend-type Vector2D
   EuclideanVector
-  (plus [x y] (.add x (to-vector y)))
-  (minus [x y] (.subtract x (to-vector y)))
-  (scale [x alpha] (.scalarMultiply x alpha))
-  (dot [x y] (.dotProduct x (to-vector y)))
+  (plus [x ^Vector2D y] (.add x y))
+  (minus [x ^Vector2D y] (.subtract x y))
+  (scale [x ^double alpha] (.scalarMultiply x alpha))
+  (dot [x ^Vector2D y] (.dotProduct x y))
   (norm [x] (.getNorm x))
   (normalize [x] (.normalize x))
   HasCross
@@ -88,11 +89,11 @@
 
 (extend-type Vector3D
   EuclideanVector
-  (plus [x y] (.add x (to-vector y)))
-  (minus [x y] (.subtract x (to-vector y)))
-  (scale [x alpha] (.scalarMultiply x alpha))
-  (dot [x y] (.dotProduct x (to-vector y)))
+  (plus [x ^Vector3D y] (.add x y))
+  (minus [x ^Vector3D y] (.subtract x y))
+  (scale [x ^double alpha] (.scalarMultiply x alpha))
+  (dot [x ^Vector3D y] (.dotProduct x y))
   (norm [x] (.getNorm x))
   (normalize [x] (.normalize x))
   HasCross
-  (cross [x y] (Vector3D/crossProduct x (to-vector y))))
+  (cross [x ^Vector3D y] (Vector3D/crossProduct x y)))
