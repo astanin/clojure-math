@@ -62,13 +62,15 @@ That said, the library is reasonably fast on small vectors, using
 arithmetics over the Clojure-vectors. However, Clojure wrappers are
 slower than direct method calls on Commons Math objects.
 
-| Vector                                    | plus    | dot     | cross   | normalize |
-|-------------------------------------------+---------+---------+---------+-----------|
-| (Vector3D. 1 2 3) / direct method calls   | 16 ns   | 35 ns   | 53 ns   | 18 ns     |
-| (Vector3D. 1 2 3) / EuclideanVector funcs | 25 ns   | 44 ns   | 61 ns   | 29 ns     |
-| (to-vector [1 2 3])                       | 93 ns   | 110 ns  | 126 ns  | 244 ns    |
-| [1.0 2.0 3.0]                             | 836 ns  | 1126 ns | 985 ns  | 2566 ns   |
-| (double-array [1 2 3])                    | 3044 ns | 3130 ns | 1448 ns | 344 ns    |
+| Vector                                    | plus | scale |  dot | cross | normalize |
+|-------------------------------------------+------+-------+------+-------+-----------|
+| (Vector3D. 1 2 3) / direct method calls   |   16 |  2760 |   35 |    53 |        18 |
+| (Vector3D. 1 2 3) / EuclideanVector funcs |   25 |    24 |   44 |    61 |        29 |
+| (to-vector [1 2 3])                       |   93 |   101 |  110 |   126 |       244 |
+| (double-array [1 2 3])                    |   40 |    41 |  217 |  1431 |       841 |
+| [1.0 2.0 3.0]                             |  836 |  1234 | 1126 |   985 |      2566 |
+
+Table: relative times for different operations across supported implementations.
 
 Consider creating vectors directly with `(Vector3D. x y z)`,
 `(Vector2D. x y)`, if the performance if more important than a convenience

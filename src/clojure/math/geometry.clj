@@ -59,33 +59,45 @@
               (dotimes [~i (int ~n)]
                 (let [~(with-meta v {:tag 'double}) (~fun (aget ~a ~i))]
                   (aset ~r ~i ~v)))
-              ~r))
-       2 (let [n (gensym "n")
-               a (gensym "a")
-               b (gensym "b")
-               r (gensym "r")
-               i (gensym "i")
-               fun (gensym "fun")]
-           `(let [~(with-meta a {:tag 'doubles}) ~(first arrs)
-                  ~(with-meta b {:tag 'doubles}) ~(second arrs)
-                  ~fun ~f
-                  ~n (alength ~a)
-                  ~(with-meta r {:tag 'doubles}) (double-array ~n)]
-              (dotimes [~i (int ~n)]
-                (aset ~r ~i (~fun (aget ~a ~i) (aget ~b ~i))))
               ~r)))))
 
 
 (extend-type (Class/forName "[D")
   EuclideanVector
-  (plus [x y] (map-double-array + x y))
-  (minus [x y] (map-double-array - x y))
-  (scale [x ^double alpha] (map-double-array #(* alpha %) x))
-  (dot [x y] (reduce + (map-double-array * x y)))
-  (norm [x] (Math/sqrt (reduce + (map-double-array #(* % %) x))))
-  (normalize [x] (let [l (norm x)] (map-double-array #(/ % l) x)))
+  (plus [x y]
+    (let [n (alength (doubles x))
+          r (double-array n)]
+      (dotimes [i n]
+        (aset r i (+ (aget (doubles x) i) (aget (doubles y) i))))
+      r))
+  (minus [x y]
+    (let [n (alength (doubles x))
+          r (double-array n)]
+      (dotimes [i n]
+        (aset r i (- (aget (doubles x) i) (aget (doubles y) i))))
+      r))
+  (scale [x ^double alpha]
+    (let [n (alength (doubles x))
+          r (double-array n)]
+      (dotimes [i n]
+        (aset r i (double (* alpha (aget (doubles x) i)))))
+      r))
+  (dot [x y]
+    (reduce +
+            (let [n (alength (doubles x))
+                  r (double-array n)]
+              (dotimes [i n]
+                (aset r i (+ (aget (doubles x) i) (aget (doubles y) i))))
+              r)))
+  (norm [x]
+    (Math/sqrt
+     (reduce + (for [v (doubles x)] (* v v)))))
+  (normalize [^doubles x]
+    (let [denom (/ 1.0 (norm x))]
+      (scale x denom)))
   HasCross
-  (cross [x y] (cross (vec x) (vec y))))
+  (cross [^doubles x ^doubles y]
+    (cross (vec x) (vec y))))
 
 
 (defprotocol Vectorizable
