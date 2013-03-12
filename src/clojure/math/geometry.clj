@@ -4,6 +4,9 @@
            [org.apache.commons.math3.geometry.euclidean.threed Vector3D]))
 
 
+(set! *unchecked-math* true)
+(set! *warn-on-reflection* true)
+
 (defprotocol EuclideanVector
   (plus [x y]    "Calculates a sum of vectors x and y.")
   (minus [x y]   "Subtracts vector y from x.")
@@ -37,6 +40,52 @@
                            (- (* x3 y1) (* x1 y3))
                            (- (* x1 y2) (* x2 y1))])
                  (throw (IllegalArgumentException. "dimension must be 2 or 3")))))
+
+
+(defmacro map-double-array
+  "Broadcasts an elementwise-operation to to the entire array. Returns a new array."
+  ([f & arrs]
+     (condp = (count arrs)
+       1 (let [n (gensym "n")
+               a (gensym "a")
+               i (gensym "i")
+               r (gensym "r")
+               fun (gensym "fun")
+               v (gensym "v")]
+           `(let [~(with-meta a {:tag 'doubles}) ~(first arrs)
+                  ~fun ~f
+                  ~n (alength ~a)
+                  ~(with-meta r {:tag 'doubles}) (double-array ~n)]
+              (dotimes [~i (int ~n)]
+                (let [~(with-meta v {:tag 'double}) (~fun (aget ~a ~i))]
+                  (aset ~r ~i ~v)))
+              ~r))
+       2 (let [n (gensym "n")
+               a (gensym "a")
+               b (gensym "b")
+               r (gensym "r")
+               i (gensym "i")
+               fun (gensym "fun")]
+           `(let [~(with-meta a {:tag 'doubles}) ~(first arrs)
+                  ~(with-meta b {:tag 'doubles}) ~(second arrs)
+                  ~fun ~f
+                  ~n (alength ~a)
+                  ~(with-meta r {:tag 'doubles}) (double-array ~n)]
+              (dotimes [~i (int ~n)]
+                (aset ~r ~i (~fun (aget ~a ~i) (aget ~b ~i))))
+              ~r)))))
+
+
+(extend-type (Class/forName "[D")
+  EuclideanVector
+  (plus [x y] (map-double-array + x y))
+  (minus [x y] (map-double-array - x y))
+  (scale [x ^double alpha] (map-double-array #(* alpha %) x))
+  (dot [x y] (reduce + (map-double-array * x y)))
+  (norm [x] (Math/sqrt (reduce + (map-double-array #(* % %) x))))
+  (normalize [x] (let [l (norm x)] (map-double-array #(/ % l) x)))
+  HasCross
+  (cross [x y] (cross (vec x) (vec y))))
 
 
 (defprotocol Vectorizable
