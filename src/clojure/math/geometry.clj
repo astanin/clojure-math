@@ -11,14 +11,19 @@
   (plus [x y]    "Calculates a sum of vectors x and y.")
   (minus [x y]   "Subtracts vector y from x.")
   (scale [x alpha] "Multiplies a vector x by a scalar alpha.")
-  (dot [x y]     "Calculates a dot product beween two vectors.")
-  (norm [x]      "Calculates an Euclidean norm of the vector.")
-  (normalize [x] "Returns a vector of length 1 coaligned with the original vector x."))
+  (dot [x y]     "Calculates a dot product beween two vectors."))
 
 
 (defprotocol HasCross
   "Vectors which support a cross product."
   (cross [x y] "Returns a cross product  between two three-dimensional vectors."))
+
+
+(defprotocol HasEuclideanNorm
+  "Defines an Euclidean norm and distance."
+  (norm [x]      "Calculates an Euclidean norm of the vector.")
+  (normalize [x] "Returns a vector of length 1 coaligned with the original vector x.")
+  (dist [x y]    "Euclidean distance between two vectors."))
 
 
 (extend-type clojure.lang.Seqable
@@ -27,8 +32,10 @@
   (minus [x y] (mapv - x y))
   (scale [x alpha] (mapv * x (repeat alpha)))
   (dot [x y] (reduce + (mapv * x y)))
+  HasEuclideanNorm
   (norm [x] (Math/sqrt (dot x x)))
   (normalize [x] (let [length (norm x)] (mapv / x (repeat length))))
+  (dist [x y] (norm (minus x y)))
   HasCross
   (cross [x y] (condp = (mapv count [x y])
                  [2 2] (let [[x1 x2] x
@@ -89,12 +96,15 @@
               (dotimes [i n]
                 (aset r i (+ (aget (doubles x) i) (aget (doubles y) i))))
               r)))
+  HasEuclideanNorm
   (norm [x]
     (Math/sqrt
      (reduce + (for [v (doubles x)] (* v v)))))
   (normalize [^doubles x]
     (let [denom (/ 1.0 (norm x))]
       (scale x denom)))
+  (dist [x y]
+    (norm (minus x y)))
   HasCross
   (cross [^doubles x ^doubles y]
     (cross (vec x) (vec y))))
@@ -142,8 +152,10 @@
   (minus [x ^Vector2D y] (.subtract x y))
   (scale [x ^double alpha] (.scalarMultiply x alpha))
   (dot [x ^Vector2D y] (.dotProduct x y))
+  HasEuclideanNorm
   (norm [x] (.getNorm x))
   (normalize [x] (.normalize x))
+  (dist [x y] (Vector2D/distance x y))
   HasCross
   (cross [[x1 x2] [y1 y2]] (- (* x1 y2) (* x2 y1))))
 
@@ -154,7 +166,9 @@
   (minus [x ^Vector3D y] (.subtract x y))
   (scale [x ^double alpha] (.scalarMultiply x alpha))
   (dot [x ^Vector3D y] (.dotProduct x y))
+  HasEuclideanNorm
   (norm [x] (.getNorm x))
   (normalize [x] (.normalize x))
+  (dist [x y] (Vector3D/distance x y))
   HasCross
   (cross [x ^Vector3D y] (Vector3D/crossProduct x y)))
