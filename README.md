@@ -7,7 +7,7 @@ Incomplete bindings to Commons Math to make up for the lack of NumPy in Clojure.
 
 Use `to-vector` to create a `Vector2D` or `Vector3D` object, which
 implements also `clojure.lang.Seqable`. Supported vector operations
-are: `plus`, `minus`, `scale`, `norm`, `normalize`, `dot`, and
+are: `plus`, `minus`, `scale`, `norm`, `normalize`, `dist`, `dot`, and
 `cross`.
 
     (use 'clojure.math.geometry)
