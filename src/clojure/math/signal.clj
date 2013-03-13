@@ -78,4 +78,10 @@
              (condp = mode
                :full (convolve-doubles-full (doubles arr) (doubles kernel))
                :same (convolve-doubles-same (doubles arr) (doubles kernel))
-               :valid (convolve-doubles-valid (doubles arr) (doubles kernel)))))))
+               :valid (convolve-doubles-valid (doubles arr) (doubles kernel))))))
+  clojure.lang.PersistentVector
+  (conv
+    ([xs kernel]
+       (conv xs kernel :full))
+    ([xs kernel mode]
+       (vec (conv (double-array xs) (double-array kernel) mode)))))
