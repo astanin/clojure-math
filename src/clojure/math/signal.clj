@@ -6,22 +6,24 @@
 
 
 (defprotocol HasConvolution
-  "Discrete convolution of one-dimensional sequences.
+  (conv [xs kernel] [xs kernel output]
+    "Discrete convolution of one-dimensional sequences.
 
-  Parameters:
+Parameters:
 
-  xs      a finite (of size N) or an infinite seqable
+xs      a finite (of size N) or an infinite seqable
 
-  kernel  a seqable of finite size K (an array, a vector)
+kernel  a seqable of finite size K (an array, a vector)
 
-  output  an optional parameter; one of :full, :valid, :same
+output  an optional parameter; one of :full, :valid, :same
 
-          :full (default)  calculate every point with an overlap (N+K-1);
-          :same            return exactly max(N, K) points,
-                           pad with zeros at edges;
-          :valid           return only (N-K+1) inner points,
-                           without zero padding at the edges."
-  (conv [xs kernel] [xs kernel output]))
+        :full (default)  calculate every point with an overlap (N+K-1);
+
+        :same            return exactly max(N, K) points,
+                         pad with zeros at edges;
+
+        :valid           return only (N-K+1) inner points,
+                         without zero padding at the edges."))
 
 
 ;; original implementation by @mikera http://stackoverflow.com/a/8256512/25450
