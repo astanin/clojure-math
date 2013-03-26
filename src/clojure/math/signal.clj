@@ -75,6 +75,51 @@ output  an optional parameter; one of :full, :valid, :same
     (convolve-doubles arr kernel offset outsize)))
 
 
+(defn- convolve-seqs
+  [xs kernel]
+  (lazy-seq
+   (when (seq xs)
+     (let [p (reduce + (map * (rseq kernel) xs))]
+       (cons p (convolve-seqs (drop 1 xs) kernel))))))
+
+
+(defn- convolve-seqs-full
+  [xs kernel]
+  (let [kernel (vec kernel)
+        ksize (count kernel)
+        zeropad (repeat (dec ksize) 0)
+        xs' (lazy-cat zeropad xs)]
+    (convolve-seqs xs' kernel)))
+
+
+(defn- convolve-seqs-same
+  [xs kernel]
+  (let [ksize (count kernel)
+        min-nsize (count (take ksize xs))
+        small-kernel? (= ksize min-nsize)
+        full (convolve-seqs-full xs kernel)
+        {skip :skip same-seq :same} (if small-kernel?
+                                      {:skip (int (/ (dec ksize) 2))
+                                       :same xs}
+                                      {:skip (int (/ (- (count full) ksize) 2))
+                                       :same kernel})]
+    (map (fn [r _] r) (drop skip full) same-seq)))
+
+
+(defn- convolve-seqs-inner
+  [xs kernel]
+  (lazy-seq
+   (when (seq (drop (dec (count kernel)) xs))
+     (let [p (reduce + (map * (rseq kernel) xs))]
+       (cons p (convolve-seqs-inner (drop 1 xs) kernel))))))
+
+
+(defn- convolve-seqs-valid
+  [xs kernel]
+  (let [kernel (vec kernel)]
+    (convolve-seqs-inner xs kernel)))
+
+
 (extend-protocol HasConvolution
   (Class/forName "[D")
   (conv
@@ -88,9 +133,18 @@ output  an optional parameter; one of :full, :valid, :same
                :full (convolve-doubles-full (doubles arr) (doubles kernel))
                :same (convolve-doubles-same (doubles arr) (doubles kernel))
                :valid (convolve-doubles-valid (doubles arr) (doubles kernel))))))
-  clojure.lang.PersistentVector
+  clojure.lang.IPersistentVector
   (conv
     ([xs kernel]
        (conv xs kernel :full))
     ([xs kernel mode]
-       (vec (conv (double-array xs) (double-array kernel) mode)))))
+       (vec (conv (double-array xs) (double-array kernel) mode))))
+  clojure.lang.ISeq
+  (conv
+    ([xs kernel]
+       (convolve-seqs-full xs kernel))
+    ([xs kernel mode]
+       (condp = mode
+         :full (convolve-seqs-full xs kernel)
+         :same (convolve-seqs-same xs kernel)
+         :valid (convolve-seqs-valid xs kernel)))))
