@@ -69,10 +69,13 @@ output  an optional parameter; one of :full, :valid, :same
 (defn- convolve-doubles-valid
   [^doubles arr ^doubles kernel]
   (let [ksize (int (alength kernel))
-        asize (int (alength arr))
-        outsize (int (+ asize (* -1 ksize) 1))
-        offset (int (dec ksize))]
-    (convolve-doubles arr kernel offset outsize)))
+        asize (int (alength arr))]
+    (if (< ksize asize)
+      (let [outsize (int (+ asize (* -1 ksize) 1))
+            offset (int (dec ksize))]
+        (convolve-doubles arr kernel offset outsize))
+      (convolve-doubles-valid kernel arr)  ; swap args if kernel is longer than arr
+      )))
 
 
 (defn- convolve-seqs
@@ -116,8 +119,12 @@ output  an optional parameter; one of :full, :valid, :same
 
 (defn- convolve-seqs-valid
   [xs kernel]
-  (let [kernel (vec kernel)]
-    (convolve-seqs-inner xs kernel)))
+  (let [kernel (vec kernel)
+        ps (convolve-seqs-inner xs kernel)]
+    (if (seq ps)
+      ps
+      (convolve-seqs-inner kernel (vec xs))  ; swap args when kernel is longer than xs
+      )))
 
 
 (extend-protocol HasConvolution
