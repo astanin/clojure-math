@@ -127,15 +127,20 @@ output  an optional parameter; one of :full, :valid, :same
       )))
 
 
+(defn- as-double-array
+  [coll]
+  (if (instance? (Class/forName "[D") coll)
+    coll
+    (double-array coll)))
+
+
 (extend-protocol HasConvolution
   (Class/forName "[D")
   (conv
     ([arr kernel]
-       (conv arr kernel :full))
+       (convolve-doubles-full (doubles arr) (doubles (as-double-array kernel))))
     ([arr kernel mode]
-           (let [kernel (if (instance? (Class/forName "[D") kernel)
-                          kernel
-                          (double-array kernel))]
+           (let [kernel (as-double-array kernel)]
              (condp = mode
                :full (convolve-doubles-full (doubles arr) (doubles kernel))
                :same (convolve-doubles-same (doubles arr) (doubles kernel))
