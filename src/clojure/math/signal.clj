@@ -161,7 +161,7 @@ output  an optional parameter; one of :full, :valid, :same
          :same (convolve-seqs-same xs kernel)
          :valid (convolve-seqs-valid xs kernel)))))
 
-
+;;; FIFO for conj/peek/pop, sorted as a sequence
 (deftype SortedQueue
   [aqueue sset]
   clojure.lang.Counted
@@ -202,3 +202,45 @@ output  an optional parameter; one of :full, :valid, :same
   (print-method '|sorted_ w)
   (print-method (seq q) w)
   (print-method '> w))
+
+
+;;; scipy.signal.medfilt outputs exactly n median values for n inputs.
+;;;
+;;; It appears its output with window (2*k+1) can be reproduced by
+;;; taking all subsequences with at least (k+1) successive elements,
+;;; and taking the (1+k)-th element from the end of every subsequence.
+;;;
+;;; def ranges(xs, n):
+;;;     return [xs[max(0,i-(n//2)):i+(n//2)+1] for i in range(len(xs))]
+;;;
+;;; def like_medfilt(xs, n):
+;;;     k = n//2
+;;;     return map(lambda ss: sorted(ss)[-(k+1)], ranges(xs, n)
+;;;
+;;; The (k+1)-th element from the end for a subsequence of length L,
+;;; is the same as (L-k)-th element from the beginning (1-indexed).
+
+(defn order-filter
+  [xs n rank]
+  (let [k (int (/ n 2))
+        xs' (lazy-cat xs (repeat k nil))  ; pad with nils to have n outputs
+        enqueue (fn [q x]
+                  (if x
+                    (if (>= (count q) n)
+                      (conj (pop q) x)
+                      (conj q x))  ; build-up a queue initially
+                    (pop q)  ; don't enqueue trailing nils
+                    ))
+        subseqs (drop (inc k)  ; only subseqs with at least (k+1) elements
+                      (reductions enqueue (sorted-queue) xs'))
+        rankth  (fn [ss]
+                  (nth (seq ss) (- (count ss) k 1)))]
+    (map rankth subseqs)))
+
+
+(defn medfilt
+  "Apply a median filter to the input sequence xs with a window size ksize.
+  ksize should be odd."
+  [xs ksize]
+  (assert (odd? ksize) "kernel size ksize should be odd.")
+  (order-filter xs ksize (int (/ ksize 2))))

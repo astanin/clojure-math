@@ -40,3 +40,16 @@
           (testing (str class-name ", :same output, long kernel")
             (is (= [543210, 54321]
                    (mapv int (conv input kern-long :valid))))))))))
+
+
+(deftest test-medfilt-same-as-scipy
+  (testing "medfilt output is the same like scipy.signal.medfilt:"
+    (let [input (range 12)]
+      (is (= (medfilt input 1)
+             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]))
+      (is (= (medfilt input 3)
+             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10]))
+      (is (= (medfilt input 5)
+             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9]))
+      (is (= (medfilt input 7)
+             [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8])))))
