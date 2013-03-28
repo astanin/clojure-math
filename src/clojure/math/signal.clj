@@ -220,7 +220,8 @@ output  an optional parameter; one of :full, :valid, :same
 ;;; The (k+1)-th element from the end for a subsequence of length L,
 ;;; is the same as (L-k)-th element from the beginning (1-indexed).
 
-(defn order-filter
+;; a variant of order-filter using a SortedQueue
+(defn- order-filter-sq
   [xs n rank]
   (let [k (int (/ n 2))
         xs' (lazy-cat xs (repeat k nil))  ; pad with nils to have n outputs
@@ -238,9 +239,39 @@ output  an optional parameter; one of :full, :valid, :same
     (map rankth subseqs)))
 
 
+;; a variant of order-filter using an unsorted PersistentQueue
+;;
+;; | (count xs) |     n |-pq/-sq rel. time |
+;; |------------+-------+------------------|
+;; |    1000000 |     3 |             0.80 |
+;; |    1000000 |    11 |             0.80 |
+;; |    1000000 |   101 |             1.10 |
+;; |    1000000 |  1001 |             1.64 |
+;; |    1000000 | 10001 |             1.76 |
+;;
+(defn- order-filter-pq
+  [xs n rank]
+  (let [k (int (/ n 2))
+        xs' (lazy-cat xs (repeat k nil))  ; pad with nils to have n outputs
+        enqueue (fn [q x]
+                  (if x
+                    (if (>= (count q) n)
+                      (conj (pop q) x)
+                      (conj q x))  ; build-up a queue initially
+                    (pop q)  ; don't enqueue trailing nils
+                    ))
+        subseqs (drop (inc k)  ; only subseqs with at least (k+1) elements
+                      (reductions enqueue clojure.lang.PersistentQueue/EMPTY xs'))
+        rankth  (fn [ss]
+                  (nth (sort (seq ss)) (- (count ss) k 1)))]
+    (map rankth subseqs)))
+
+
 (defn medfilt
   "Apply a median filter to the input sequence xs with a window size ksize.
   ksize should be odd."
   [xs ksize]
   (assert (odd? ksize) "kernel size ksize should be odd.")
-  (order-filter xs ksize (int (/ ksize 2))))
+  (if (> ksize 40)
+    (order-filter-sq xs ksize (int (/ ksize 2)))
+    (order-filter-pq xs ksize (int (/ ksize 2)))))
