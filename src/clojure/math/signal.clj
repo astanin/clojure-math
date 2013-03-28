@@ -160,3 +160,45 @@ output  an optional parameter; one of :full, :valid, :same
          :full (convolve-seqs-full xs kernel)
          :same (convolve-seqs-same xs kernel)
          :valid (convolve-seqs-valid xs kernel)))))
+
+
+(deftype SortedQueue
+  [aqueue sset]
+  clojure.lang.Counted
+  (count [this]
+    (count (.sset this)))
+  clojure.lang.IPersistentCollection
+  (cons [this x]
+    (SortedQueue. (conj (.aqueue this) x)
+                  (conj (.sset this) x)))
+  (empty [this]
+    (SortedQueue. (empty (.aqueue this))
+                  (empty (.sset this))))
+  clojure.lang.IPersistentStack
+  (pop [this]
+    (let [aqueue (.aqueue this)
+          sset (.sset this)
+          fst (peek aqueue)]
+      (SortedQueue. (pop aqueue) (disj sset fst))))
+  (peek [this]
+    (peek (.aqueue this)))
+  clojure.lang.Seqable
+  (seq [this]
+    (seq (.sset this))))
+
+
+(defn sorted-queue
+  "Returns a new sorted queue with supplied values."
+  [& vals]
+  (let [aqueue (into clojure.lang.PersistentQueue/EMPTY vals)
+        sset (apply sorted-set vals)]
+    (SortedQueue. aqueue sset)))
+
+
+(defmethod print-method SortedQueue
+  [^SortedQueue q w]
+  (print-method '<queue_ w)
+  (print-method (seq (.aqueue q)) w)
+  (print-method '|sorted_ w)
+  (print-method (seq q) w)
+  (print-method '> w))
