@@ -1,7 +1,9 @@
 (ns clojure.math.geometry
   (:import [org.apache.commons.math3.geometry.euclidean.oned Vector1D]
            [org.apache.commons.math3.geometry.euclidean.twod Vector2D]
-           [org.apache.commons.math3.geometry.euclidean.threed Vector3D]))
+           [org.apache.commons.math3.geometry.euclidean.threed Vector3D]
+           [org.ejml.data DenseMatrix64F]
+           [org.ejml.ops CommonOps NormOps]))
 
 
 (set! *unchecked-math* true)
@@ -172,3 +174,33 @@
   (dist [x y] (Vector3D/distance x y))
   HasCross
   (cross [x ^Vector3D y] (Vector3D/crossProduct x y)))
+
+
+(defn- alloc-DenseMatrix64F
+  [^DenseMatrix64F m]
+  (DenseMatrix64F. (.getNumRows m) (.getNumCols m)))
+
+
+(extend-type DenseMatrix64F
+  EuclideanVector
+  (plus [x ^DenseMatrix64F y]
+    (let [s ^DenseMatrix64F (alloc-DenseMatrix64F x)]
+      (CommonOps/add x y s)
+      s))
+  (minus [x ^DenseMatrix64F y]
+    (let [d (alloc-DenseMatrix64F x)]
+      (CommonOps/sub x y d)
+      d))
+  (scale [x ^double alpha]
+    (let [ax (alloc-DenseMatrix64F x)]
+      (CommonOps/scale alpha x ax)
+      ax))
+  (dot [x ^DenseMatrix64F y]
+    (let [p (alloc-DenseMatrix64F x)]
+      (CommonOps/elementMult x y p)
+      (CommonOps/elementSum p)))
+  HasEuclideanNorm
+  (norm [x]
+    (NormOps/normP2 x))
+  (normalize [x]
+    (scale x (/ 1.0 (norm x)))))
