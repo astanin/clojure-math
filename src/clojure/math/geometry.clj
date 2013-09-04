@@ -122,7 +122,7 @@
             (let [n (alength (doubles x))
                   r (double-array n)]
               (dotimes [i n]
-                (aset r i (+ (aget (doubles x) i) (aget (doubles y) i))))
+                (aset r i (* (aget (doubles x) i) (aget (doubles y) i))))
               r)))
   HasEuclideanNorm
   (norm [x]
