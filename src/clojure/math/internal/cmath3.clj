@@ -41,6 +41,12 @@
       3 (derive-seqable Vector3D arr))))
 
 
+(defn from-vector
+  "Converts a Common-Math's Euclidean vector to Clojure vector."
+  [v]
+  (vec (.toArray v)))
+
+
 ;;; Disable generated codox API documentation for some vars
 (alter-meta! #'Vectorizable assoc :no-doc true)
 (alter-meta! #'derive-seqable assoc :no-doc true)
