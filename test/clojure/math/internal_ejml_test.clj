@@ -26,3 +26,15 @@
         (testing (str "vector norm " ord)
           (is (approx= (double numpy-norm-value)
                        (norm v ord))))))))
+
+
+(deftest test-mult-outer
+  (is (= [[5.0 11.0] [11.0 25.0]]
+         (from-matrix (mult-outer (to-matrix [[1 2] [3 4]])))))
+  (is (= [[5.0 11.0 17.0] [11.0 25.0 39.0] [17.0 39.0 61.0]]
+         (from-matrix (mult-outer (to-matrix [[1 2] [3 4] [5 6]]))))))
+
+
+(deftest test-trans
+  (is (= [[1. 4.] [2. 5.] [3. 6.]]
+         (from-matrix (trans (to-matrix [[1 2 3] [4 5 6]]))))))

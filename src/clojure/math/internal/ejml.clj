@@ -128,6 +128,21 @@
     out))
 
 
+(defn mult-outer
+  "Computes the matrix multiplication outer product
+
+       P = M * M'
+
+       P_{ij} = \\sum_{k=1:m} M_{ik} M_{jk}
+  "
+  [^DenseMatrix64F m]
+  (let [dim (.numRows m)           ; M is an dim x N matrix
+        out (make-matrix dim dim)  ; M*M' is a dim x dim matrix
+        ]
+    (CommonOps/multOuter m out)
+    out))
+
+
 (defn element-mult
   "Computes element-by-element multiplication."
   [^DenseMatrix64F m1 ^DenseMatrix64F m2]
@@ -200,3 +215,12 @@
          :inf (NormOps/normPInf m)
          ;; Frobenius norm not implemented
          ))))
+
+
+(defn trans
+  "Transposes matrix."
+  [^DenseMatrix64F m]
+  (let [[rows cols] (matrix-shape m)
+        mt (alloc-DenseMatrix64F cols rows)]
+    (CommonOps/transpose m mt)
+    mt))
