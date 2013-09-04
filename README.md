@@ -5,6 +5,7 @@ of code, to make up for the lack of NumPy and SciPy in Clojure.
 
 [API documentation](http://astanin.github.io/clojure-math/)
 
+[![Build Status](https://travis-ci.org/astanin/clojure-math.png?branch=master)](https://travis-ci.org/astanin/clojure-math)
 
 ## Usage
 
