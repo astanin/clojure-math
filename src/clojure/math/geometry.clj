@@ -1,11 +1,11 @@
 (ns clojure.math.geometry
   "Vector algebra."
   (:use clojure.math.internal.cmath3)
+  (:require [clojure.math.internal.ejml :as ejml])
   (:import [org.apache.commons.math3.geometry.euclidean.oned Vector1D]
            [org.apache.commons.math3.geometry.euclidean.twod Vector2D]
            [org.apache.commons.math3.geometry.euclidean.threed Vector3D]
-           [org.ejml.data DenseMatrix64F]
-           [org.ejml.ops CommonOps NormOps]))
+           [org.ejml.data DenseMatrix64F]))
 
 
 (set! *unchecked-math* true)
@@ -166,34 +166,24 @@
   (cross [x ^Vector3D y] (Vector3D/crossProduct x y)))
 
 
-(defn- alloc-DenseMatrix64F
-  [^DenseMatrix64F m]
-  (DenseMatrix64F. (.getNumRows m) (.getNumCols m)))
-
-
 (extend-type DenseMatrix64F
   EuclideanVector
   (plus [x ^DenseMatrix64F y]
-    (let [s ^DenseMatrix64F (alloc-DenseMatrix64F x)]
-      (CommonOps/add x y s)
-      s))
+    (ejml/add x y))
   (minus [x ^DenseMatrix64F y]
-    (let [d (alloc-DenseMatrix64F x)]
-      (CommonOps/sub x y d)
-      d))
+    (ejml/sub x y))
   (scale [x ^double alpha]
-    (let [ax (alloc-DenseMatrix64F x)]
-      (CommonOps/scale alpha x ax)
-      ax))
+    (ejml/scalar-mult x alpha))
   (dot [x ^DenseMatrix64F y]
-    (let [p (alloc-DenseMatrix64F x)]
-      (CommonOps/elementMult x y p)
-      (CommonOps/elementSum p)))
+    (ejml/sum-elements (ejml/element-mult x y)))
   HasEuclideanNorm
   (norm [x]
-    (NormOps/normP2 x))
+    (ejml/norm x 2))
   (normalize [x]
-    (scale x (/ 1.0 (norm x)))))
+    (scale x (/ 1.0 (norm x))))
+  (dist [x ^DenseMatrix64F y]
+    (norm (minus x y)))
+  )
 
 
 ;;; Disable generated codox API documentation for some vars
