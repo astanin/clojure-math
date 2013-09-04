@@ -9,7 +9,16 @@
 (set! *unchecked-math* true)
 (set! *warn-on-reflection* true)
 
+
 (defprotocol EuclideanVector
+  "Types with basic vector arithmetics: plus, minus, scale, dot.
+
+   Known imlpementations:
+
+     Clojure seqables,
+     double arrays,
+     Common-Math's Vector2D and Vector3D,
+     EJML's DenseMatrix64F."
   (plus [x y]    "Calculates a sum of vectors x and y.")
   (minus [x y]   "Subtracts vector y from x.")
   (scale [x alpha] "Multiplies a vector x by a scalar alpha.")
@@ -17,12 +26,27 @@
 
 
 (defprotocol HasCross
-  "Vectors which support a cross product."
+  "Vectors which support a cross product: cross.
+
+  Known implementations:
+
+     Clojure seqables of length 3 or 2
+     double arrays of length 3 or 2,
+     Common-Math's Vector2D and Vector3D.
+
+  For 2D vectors cross returns a scalar."
   (cross [x y] "Returns a cross product  between two three-dimensional vectors."))
 
 
 (defprotocol HasEuclideanNorm
-  "Defines an Euclidean norm and distance."
+  "Defines an Euclidean norm and distance: norm, normalize, dist.
+
+   Known imlpementations:
+
+     Clojure seqables,
+     double arrays,
+     Common-Math's Vector2D and Vector3D,
+     EJML's DenseMatrix64F."
   (norm [x]      "Calculates an Euclidean norm of the vector.")
   (normalize [x] "Returns a vector of length 1 coaligned with the original vector x.")
   (dist [x y]    "Euclidean distance between two vectors."))
@@ -114,7 +138,7 @@
 
 (defprotocol Vectorizable
   "Data types convertible to Commons Math's Euclidean vectors."
-  (to-vector [coll] "Converts a sequence to a Common Math's vector."))
+  (to-vector [coll] "Converts a sequence to a Common Math's Euclidean vector (2D or 3D)."))
 
 
 (defmacro derive-seqable
@@ -127,7 +151,7 @@
 
 
 (defn make-vector
-  "Creates an Euclidean vector."
+  "Creates an Commons-Math's Euclidean vector (2D or 3D)."
   ([^double x ^double y]
      (derive-seqable Vector2D x y))
   ([^double x ^double y ^double z]
@@ -204,3 +228,9 @@
     (NormOps/normP2 x))
   (normalize [x]
     (scale x (/ 1.0 (norm x)))))
+
+
+;;; Disable generated codox API documentation for some vars
+(alter-meta! #'Vectorizable assoc :no-doc true)
+(alter-meta! #'map-double-array assoc :no-doc true)
+(alter-meta! #'derive-seqable assoc :no-doc true)

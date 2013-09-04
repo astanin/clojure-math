@@ -275,3 +275,8 @@ output  an optional parameter; one of :full, :valid, :same
   (if (> ksize 40)
     (order-filter-sq xs ksize (int (/ ksize 2)))
     (order-filter-pq xs ksize (int (/ ksize 2)))))
+
+
+;;; Disable generated codox API documentation for some vars
+(alter-meta! #'->SortedQueue assoc :no-doc true)
+(alter-meta! #'sorted-queue assoc :no-doc true)
