@@ -1,4 +1,4 @@
-(ns clojure.math.fit
+(ns clojure.math.geometry.fit
   (:use [clojure.math.geometry :only [plus minus scale]])
   (:import [org.ejml.data DenseMatrix64F]
            [org.ejml.ops CommonOps]
@@ -17,7 +17,7 @@
 
 
 (defn- from-matrix
-  "Converts an EJML Matrix64F to a Clojure vector."
+  "Converts an EJML Matrix64F to a Clojure vector or vectors."
   [^DenseMatrix64F m]
   (if (or (= 1 (.numRows m)) (= 1 (.numCols m)))
     (into [] (.getData m))  ; 1D matrix to a simple vector
@@ -42,7 +42,7 @@
 (defn- det
   "Computes determinant of the matrix."
   [^DenseMatrix64F m]
-  (CommonOps/det m))
+  (CommonOps/det ))
 
 
 (defn- dominant-direction
