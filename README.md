@@ -1,35 +1,33 @@
 # clojure-math
 
-Incomplete bindings to Commons Math, and other math-related bits of
-code, to make up for the lack of NumPy and SciPy in Clojure.
+Incomplete bindings to Commons Math, EJML, and other math-related bits
+of code, to make up for the lack of NumPy and SciPy in Clojure.
+
+[API documentation](http://astanin.github.io/clojure-math/)
 
 
 ## Usage
 
-### Vectors
+### Vector algebra
 
-Use `to-vector` to create a `Vector2D` or `Vector3D` object, which
-implements also `clojure.lang.Seqable`. Supported vector operations
-are: `plus`, `minus`, `scale`, `norm`, `normalize`, `dist`, `dot`, and
-`cross`.
+Supported vector operations are: `plus`, `minus`, `scale`, `norm`,
+`normalize`, `dist`, `dot`, and `cross`.
+
+Currently supported vector representations: any
+`clojure.lang.Seqable`, double arrays, `Vector2D` from `Vector3D` from
+Commons Math 3, `DenseMatrix64F` from EJML.
+
+To create Commons Math's vectors from Clojure sequences, use `to-vector`:
 
     (use 'clojure.math.geometry)
+    (use '[clojure.math.internal.cmath3 :only [to-vector]])
 
     (let [x (to-vector [1 2 3])
           y (to-vector [4 5 6])]
       (cross x y))
 
-Currently supported data types: any `clojure.lang.Seqable`, double
-arrays, `Vector2D`, `Vector3D`.
-
 Using Commons Math's vector constructors directly results in faster
-operations, but you don't get a `Seqable` instance:
-
-    (import 'org.apache.commons.math3.geometry.euclidean.threed.Vector3D)
-
-    (let [x (Vector3D. 1 2 3)
-          y (Vector3D. 4 5 6)]
-      (cross x y))
+operations, but you don't get a `Seqable` instance.
 
 
 ### Convolution and filtering
@@ -48,6 +46,24 @@ for `mode` parameter of [`numpy.convolve`][numpy-convolve].
 Currently supported data types are: double arrays and vectors.
 
 [numpy-convolve]: http://docs.scipy.org/doc/numpy/reference/generated/numpy.convolve.html
+
+For median filter use `medfilt`:
+
+    user=> (use 'clojure.math.signal)
+    nil
+    user=> (medfilt [0 0 1 0 0 0 2 0 3 0 0] 5)
+    (0 0 0 0 0 0 0 0 0 0 0)
+
+
+### Geometric fitting
+
+Fitting lines using total least squares
+
+    user=> (use 'clojure.math.geometry.fit)
+    nil
+    user=> (fit-line [[0 1] [1 2] [2 3.1] [4 5]])
+    {:point [1.75 2.775], :direction [-0.7059474712429025 -0.7082641935363889]}
+
 
 
 ## License

@@ -1,4 +1,5 @@
-(ns clojure.math.signal)
+(ns clojure.math.signal
+  "Signal processing.")
 
 
 (set! *warn-on-reflection* true)

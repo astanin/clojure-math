@@ -1,4 +1,5 @@
 (ns clojure.math.geometry
+  "Vector algebra."
   (:use clojure.math.internal.cmath3)
   (:import [org.apache.commons.math3.geometry.euclidean.oned Vector1D]
            [org.apache.commons.math3.geometry.euclidean.twod Vector2D]

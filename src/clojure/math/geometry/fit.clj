@@ -1,4 +1,5 @@
 (ns clojure.math.geometry.fit
+  "Geometric fitting."
   (:use [clojure.math.geometry :only [plus minus scale]]
         clojure.math.internal.ejml))
 
