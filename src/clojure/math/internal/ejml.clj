@@ -1,8 +1,10 @@
 (ns clojure.math.internal.ejml
   "Internal interface to EJML library functions and types."
   (:import [org.ejml.data DenseMatrix64F]
-           [org.ejml.ops CommonOps NormOps]
-           [org.ejml.alg.dense.decomposition.eig SymmetricQRAlgorithmDecomposition]))
+           [org.ejml.ops CommonOps NormOps SingularOps]
+           [org.ejml.simple SimpleMatrix SimpleSVD SimpleEVD]
+           [org.ejml.alg.dense.decomposition.eig SymmetricQRAlgorithmDecomposition]
+           [org.ejml.alg.dense.decomposition.svd SafeSvd SvdImplicitQrDecompose]))
 
 
 (defn- alloc-DenseMatrix64F
@@ -47,7 +49,57 @@
     ))
 
 
-(defn eig!
+(defn svd
+  "Computes singular value decomposition of matrix M as M = U * S * V',
+   where U and V are orthogonal, and S is diagonal. Returns a map with
+   keys :u, :s (a vector of singular values), and :v. May return nil
+   if decomposition fails.
+
+   Keyword arguments:
+
+   :compact     If false and M is m x n, the matrices U and V' are square m
+                x m and n x n respectively.  If true and M is m x n,
+                svd calculates only the first k columns of U, and the
+                first k rows of V', where k = min(m, n).
+                (default: false)
+
+   :compute-uv  If false, svd calculates only a vector of singular
+                values :s. If true, svd calculates U and V in
+                addition to S. (default: true)
+
+   :order       If false, singular values are not ordered.
+                If true, singular values are given in decreasing order.
+                (default: true)"
+  [^DenseMatrix64F m
+   & {:keys [compact compute-uv order]
+      :or   {compact true compute-uv true order true}}]
+  (let [^SafeSvd svd (SafeSvd.
+                      (SvdImplicitQrDecompose.
+                       compact compute-uv compute-uv true))
+        sucess? (.decompose svd m)]
+    (when sucess?
+      (if compute-uv
+        (let [[rows cols] (matrix-shape m)
+              u-cols (if compact (min rows cols) rows)
+              v-rows (if compact (min rows cols) cols)
+              u (make-matrix rows u-cols)
+              v (make-matrix v-rows cols)
+              s (.getSingularValues svd)]
+          (.getU svd u false)
+          (.getV svd v true)
+          (when order
+            (SingularOps/descendingOrder u false s (min rows cols) v true))
+          {:u u
+           :s (vec s)
+           :v v})
+        ;; else only singular values
+        (let [s (.getSingularValues svd)]
+          (if order
+            {:s (vec (sort-by - s))}      ; descending order
+            {:s (vec s)}))))))
+
+
+(defn- eig!
   "Computes eigen-value decomposition of a symmetric matrix m,
   returns pairs of eigenvalue and eigenvector.
   Overwrites the matrix m."
