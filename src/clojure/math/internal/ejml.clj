@@ -2,8 +2,7 @@
   "Internal interface to EJML library functions and types."
   (:import [org.ejml.data DenseMatrix64F]
            [org.ejml.ops CommonOps NormOps SingularOps]
-           [org.ejml.simple SimpleMatrix SimpleSVD SimpleEVD]
-           [org.ejml.alg.dense.decomposition.eig SymmetricQRAlgorithmDecomposition]
+           [org.ejml.alg.dense.decomposition.eig SwitchingEigenDecomposition]
            [org.ejml.alg.dense.decomposition.svd SafeSvd SvdImplicitQrDecompose]))
 
 
@@ -100,22 +99,22 @@
 
 
 (defn- eig!
-  "Computes eigen-value decomposition of a symmetric matrix m,
-  returns pairs of eigenvalue and eigenvector.
+  "Computes eigen-value decomposition of a real matrix m.
+  Returns a sequance of maps with keys :eigenvalue and :eigenvector.
   Overwrites the matrix m."
   [^DenseMatrix64F m]
-  (let [^SymmetricQRAlgorithmDecomposition
-        sqr (SymmetricQRAlgorithmDecomposition. true)]
-    (.decompose sqr m)
+  (let [[rows cols] (matrix-shape m)
+        ^SwitchingEigenDecomposition sed (SwitchingEigenDecomposition. (* rows cols))]
+    (.decompose sed m)
     (let [pairs (for [^int i (range (.numRows m))]
-                  {:eigenvalue (.real (.getEigenvalue sqr i))
-                   :eigenvector (.getEigenVector sqr i)})]
+                  {:eigenvalue (.real (.getEigenvalue sed i))
+                   :eigenvector (.getEigenVector sed i)})]
       pairs)))
 
 
 (defn eig
-  "Computes eigen-value decomposition of a symmetric matrix m,
-  returns pairs of eigenvalue and eigenvector."
+  "Computes eigen-value decomposition of a real matrix m.
+  Returns a sequence of maps with keys :eigenvalue and :eigenvector."
   [^DenseMatrix64F m]
   (eig! (.copy m)))
 
