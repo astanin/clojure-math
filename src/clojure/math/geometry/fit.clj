@@ -43,12 +43,11 @@
   the plane. Can be used to fit a line in 2D."
   [pts]
   (let [p (average-vector pts)
+        dim (count p)
         pts' (map #(minus % p) pts)
-        evs (->> (to-matrix pts')  ; M, point vectors as rows
-                 (mult-inner)      ; M' * M  =>  dim x dim matrix
-                 (eig)
-                 (sort-by :eigenvalue  ; smallest first
-                          ))]
+        ut (->> (to-matrix pts') trans svd :u trans from-matrix)
+        normal (last ut)
+        basis (take (- dim 1) ut)]
     {:point p
-     :normal (matrix1d-to-vector (:eigenvector (first evs)))
-     :basis (map (comp matrix1d-to-vector :eigenvector) (rest evs))}))
+     :normal normal
+     :basis basis}))
