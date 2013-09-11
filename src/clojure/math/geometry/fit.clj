@@ -22,10 +22,34 @@
     (scale s (/ 1.0 n))))
 
 
+;;; TODO: consider non-Clojure vector output by default
+(defn- matrix1d-to-vector
+  [d]
+  (vec (.getData d)))
+
+
 (defn fit-line
   "Fits a line to a sequence of points. Returns a map with keys :point and :direction."
   [pts]
   (let [p (average-vector pts)
         d (dominant-direction (map #(minus % p) pts))]
     {:point (vec p)
-     :direction (vec (.getData d))}))
+     :direction (matrix1d-to-vector d)}))
+
+
+(defn fit-plane
+  "Fits a plane to a sequence of points. Returns a map with
+  keys :point (a point belonging to the plane), :normal (a vector
+  normal to the plane), and :basis (vectors of an orhonormal basis in
+  the plane."
+  [pts]
+  (let [p (average-vector pts)
+        pts' (map #(minus % p) pts)
+        evs (->> (to-matrix pts')  ; M, point vectors as rows
+                 (mult-inner)      ; M' * M  =>  dim x dim matrix
+                 (eig!)
+                 (sort-by :eigenvalue  ; smallest first
+                          ))]
+    {:point p
+     :normal (matrix1d-to-vector (:eigenvector (first evs)))
+     :basis (map (comp matrix1d-to-vector :eigenvector) (rest evs))}))
