@@ -1,4 +1,5 @@
 (ns clojure.math.internal-ejml-test
+  (require [clojure.math.geometry :as geom])
   (:use clojure.test
         clojure.math.internal.ejml))
 
@@ -38,3 +39,9 @@
 (deftest test-trans
   (is (= [[1. 4.] [2. 5.] [3. 6.]]
          (from-matrix (trans (to-matrix [[1 2 3] [4 5 6]]))))))
+
+
+(deftest test-pinv
+  (is (> 1e-12
+         (norm (geom/minus (to-matrix [[-23 -6 11] [-2 0 2] [19 6 -7]])
+                           (geom/scale (pinv (to-matrix [[1 2 3] [4 5 6] [7 8 9]])) 36))))))

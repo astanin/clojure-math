@@ -275,3 +275,12 @@
         mt (alloc-DenseMatrix64F cols rows)]
     (CommonOps/transpose m mt)
     mt))
+
+
+(defn pinv
+  "Computes the Moore-Penrose pseudo-inverse of M: M^{+} = (M' M)^{-1} M'."
+  [^DenseMatrix64F m]
+  (let [[rows cols] (matrix-shape m)
+        minv (make-matrix cols rows)]
+    (CommonOps/pinv m minv)
+    minv))
