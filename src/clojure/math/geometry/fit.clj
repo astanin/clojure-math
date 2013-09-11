@@ -10,7 +10,7 @@
   (let [^DenseMatrix64F
         m (to-matrix pts)    ; M is an N x dim matrix
         mip (mult-inner m)   ; M' * M => dim x dim matrix
-        epairs (eig! mip)]
+        epairs (eig mip)]
     (:eigenvector (last (sort-by :eigenvalue epairs)))))
 
 
@@ -22,7 +22,6 @@
     (scale s (/ 1.0 n))))
 
 
-;;; TODO: consider non-Clojure vector output by default
 (defn- matrix1d-to-vector
   [d]
   (vec (.getData d)))
@@ -41,13 +40,13 @@
   "Fits a plane to a sequence of points. Returns a map with
   keys :point (a point belonging to the plane), :normal (a vector
   normal to the plane), and :basis (vectors of an orhonormal basis in
-  the plane."
+  the plane. Can be used to fit a line in 2D."
   [pts]
   (let [p (average-vector pts)
         pts' (map #(minus % p) pts)
         evs (->> (to-matrix pts')  ; M, point vectors as rows
                  (mult-inner)      ; M' * M  =>  dim x dim matrix
-                 (eig!)
+                 (eig)
                  (sort-by :eigenvalue  ; smallest first
                           ))]
     {:point p
