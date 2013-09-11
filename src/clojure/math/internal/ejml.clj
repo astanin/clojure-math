@@ -30,6 +30,12 @@
   (DenseMatrix64F. num-rows num-cols))
 
 
+(defn diag
+  "Constructs a diagonal matrix from a vector."
+  [v]
+  (CommonOps/diag (double-array v)))
+
+
 (defn to-matrix
   "Converts a sequences of sequences to a new EJML Matrix64F."
   ([seq-of-seqs]
