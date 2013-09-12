@@ -45,8 +45,10 @@
   keys :point (a point belonging to the plane), :normal (a vector
   normal to the plane), :basis (vectors of an orhonormal basis in the
   plane, and :offset (the signed distance `d` from the plane to the
-  origin: given normal is [a b c], the plane equation is `ax + by + cz
-  + d = 0`). The function can also be used to fit a line in 2D."
+  origin: given normal is unit vector [a b c], the plane equation is
+  `ax + by + cz + d = 0`).
+
+  The function can also be used to fit a line in 2D."
   [pts]
   (let [p (average-vector pts)
         dim (count p)
@@ -100,3 +102,37 @@
     {:center [x0 y0]
      :radius (Math/sqrt r2)
      :radius2 r2}))
+
+
+(defn- to-plane-coords
+  "Return 2D coordinates in the plane basis."
+  [plane pt3d]
+  (let [[e1 e2] (:basis plane)
+        p (geom/minus pt3d (:point plane))]
+    [(dot e1 p)
+     (dot e2 p)]))
+
+
+(defn- from-plane-coords
+  "Return 3D coordinates of the point in the plane."
+  [plane pt2d]
+  (let [[u v] pt2d
+        [e1 e2] (:basis plane)]
+    (geom/plus
+     (geom/plus (:point plane) (geom/scale e1 u))
+     (geom/scale e2 v))))
+
+
+(defn fit-circle-3d
+  "Fits a plane to a sequence of points in 3D, and then fits a circle
+  to their projections to the plane. Returns a map with keys :center
+  (a 3D vector), :radius, :radius2, and :plane (a plane of the circle)."
+  [pts]
+  (assert (= 3 (count (first pts))) "points are not 3D")
+  (assert (<= 3 (count pts)) "need at least 3 points")
+  (let [base-plane (fit-plane pts)
+        plane-pts  (map #(to-plane-coords base-plane %) pts)
+        circle-2d  (fit-circle-2d plane-pts)]
+    (-> circle-2d
+     (update-in [:center] #(from-plane-coords base-plane %))
+     (assoc :plane base-plane))))

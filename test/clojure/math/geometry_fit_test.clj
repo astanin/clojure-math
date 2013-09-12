@@ -42,7 +42,7 @@
 
 
 (deftest test-fit-circle-2d
-  (testing "three-pont fit"
+  (testing "three-point fit"
     (let [circ (fit-circle-2d [[-1 0] [0 1] [1.0 0]])]
       (is (= [0.0 0.0] (:center circ)))
       (is (= 1.0 (:radius circ)))))
@@ -57,3 +57,26 @@
           circ (fit-circle-2d pts)]
       (is (> (* 3 noise) (dist (:center circ) [x0 y0])))
       (is (> (* 3 noise) (- (:radius circ) r0))))))
+
+
+(deftest test-fit-circle-3d
+  (testing "three-point fit"
+    (let [pts  [[-1 0 -2] [0 1 0] [1 0 2]]
+          circ (fit-circle-3d pts)
+          center (:center circ)
+          radius (:radius circ)]
+      (is (every? #(> 1e-10 (- radius (dist % center))) pts))))
+  (testing "fittting with noise ~ 0.1 for {:center [1 2 3], :radius 2}"
+    (let [[x0 y0 z0 r0 noise] [1.0 2.0 3.0 2.0 0.1]
+          pts (for [phi (range -90 90 12)]
+                (let [a (/ (* Math/PI phi) 180)
+                      c (Math/cos a)
+                      s (Math/sin a)]
+                  [(+ x0 (* r0 c) (rand noise))
+                   (+ y0 (* r0 s) (rand noise))
+                   (+ z0 (rand noise))]))
+          circ (fit-circle-3d pts)]
+      (is (> (* 3 noise) (dist (:center circ) [x0 y0 z0])))
+      (is (> (* 3 noise) (- (:radius circ) r0)))
+      (is (> (* 3 noise) (min (dist (:normal (:plane circ)) [0 0 1])
+                              (dist (:normal (:plane circ)) [0 0 -1])))))))
