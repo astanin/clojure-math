@@ -1,6 +1,6 @@
 (ns clojure.math.geometry.fit
   "Geometric fitting."
-  (:use [clojure.math.geometry :only [plus minus scale]]
+  (:use [clojure.math.geometry :only [plus minus scale dot]]
         clojure.math.internal.ejml))
 
 
@@ -39,15 +39,20 @@
 (defn fit-plane
   "Fits a plane to a sequence of points. Returns a map with
   keys :point (a point belonging to the plane), :normal (a vector
-  normal to the plane), and :basis (vectors of an orhonormal basis in
-  the plane. Can be used to fit a line in 2D."
+  normal to the plane), :basis (vectors of an orhonormal basis in the
+  plane, and :offset (the signed distance `d` from the plane to the
+  origin: given normal is [a b c], the plane equation is `ax + by + cz
+  + d = 0`). The function can also be used to fit a line in 2D."
   [pts]
   (let [p (average-vector pts)
         dim (count p)
         pts' (map #(minus % p) pts)
         ut (->> (to-matrix pts') trans svd :u trans from-matrix)
-        normal (last ut)
-        basis (take (- dim 1) ut)]
+        normal (last ut)    ; assuming a unit vector
+        basis (take (- dim 1) ut)
+        offset (let [op (minus p (scale p 0))]
+                 (- (dot op normal)))]
     {:point p
      :normal normal
-     :basis basis}))
+     :basis basis
+     :offset offset}))
