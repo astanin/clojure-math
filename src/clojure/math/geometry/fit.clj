@@ -1,8 +1,12 @@
 (ns clojure.math.geometry.fit
   "Geometric fitting."
+  (:require [clojure.math.geometry :as geom])
   (:use [clojure.math.geometry :only [plus minus scale dot]]
         clojure.math.internal.ejml))
 
+
+(set! *unchecked-math* true)
+(set! *warn-on-reflection* true)
 
 
 (defn- dominant-direction
@@ -56,3 +60,43 @@
      :normal normal
      :basis basis
      :offset offset}))
+
+
+(defn- **2
+  [^double x]
+  (* x x))
+
+
+(defn fit-circle-2d
+  "Fits a circle to a sequence of points in plane by mapping points on
+  the Riemann sphere and fitting a plane in 3D. Returns a map with
+  keys :center (a vector), :radius (circle radius), and :radius2
+  (squared circle radius).
+
+  A. Strandlie, J. Wroldsen, R. Frühwirth, B. Lillekjendlie, Particle
+  tracks fitted on the Riemann sphere, Computer Physics
+  Communications, Volume 131, Issues 1–2, 1 September 2000, Pages
+  95-108, ISSN 0010-4655, http://dx.doi.org/10.1016/S0010-4655(00)00086-2."
+  [pts]
+  (assert (= 2 (count (first pts))) "points are not 2D")
+  (assert (<= 3 (count pts)) "need at least 3 points")
+  (let [;; polar coordinates (cosines and sines instead of angles)
+        rs   (map geom/norm pts)
+        coss (map (fn [[x y] r] (/ x r)) pts rs)
+        sins (map (fn [[x y] r] (/ y r)) pts rs)
+        ;; points on a Riemann sphere
+        xs   (map (fn [r c] (/ (* r c) (+ 1 (**2 r)))) rs coss)
+        ys   (map (fn [r s] (/ (* r s) (+ 1 (**2 r)))) rs sins)
+        zs   (map (fn [r] (/ (* r r) (+ 1 (**2 r)))) rs)
+        ;; plane of the circle on the sphere
+        pl   (fit-plane (map vector xs ys zs))
+        [n1 n2 n3] (:normal pl)
+        c          (:offset pl)
+        ;; parameters of the circle
+        x0   (- (/ n1 (* 2 (+ c n3))))
+        y0   (- (/ n2 (* 2 (+ c n3))))
+        r2   (/ (+ (**2 n1) (**2 n2) (- (* 4 c (+ c n3))))
+                (* 4 (**2 (+ c n3))))]
+    {:center [x0 y0]
+     :radius (Math/sqrt r2)
+     :radius2 r2}))

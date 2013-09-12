@@ -1,6 +1,6 @@
 (ns clojure.math.geometry-fit-test
   (:use clojure.test
-        [clojure.math.geometry :only [dot]]
+        [clojure.math.geometry :only [dot dist]]
         clojure.math.geometry.fit))
 
 (deftest test-fit-line
@@ -39,3 +39,21 @@
       (is (every? #(= 0.0 (last %)) (:basis p)))
       (is (> 1e-10 (apply dot (:basis p))))
       (is (> (+ 1e-10 0.25) (apply max (map #(plane-eq-residual p %) pts)))))))
+
+
+(deftest test-fit-circle-2d
+  (testing "three-pont fit"
+    (let [circ (fit-circle-2d [[-1 0] [0 1] [1.0 0]])]
+      (is (= [0.0 0.0] (:center circ)))
+      (is (= 1.0 (:radius circ)))))
+  (testing "fittting with noise ~ 0.1 for {:center [1 2], :radius 2}"
+    (let [[x0 y0 r0 noise] [1.0 2.0 2.0 0.1]
+          pts (for [phi (range -90 90 12)]
+                (let [a (/ (* Math/PI phi) 180)
+                      c (Math/cos a)
+                      s (Math/sin a)]
+                  [(+ x0 (* r0 c) (rand noise))
+                   (+ y0 (* r0 s) (rand noise))]))
+          circ (fit-circle-2d pts)]
+      (is (> (* 3 noise) (dist (:center circ) [x0 y0])))
+      (is (> (* 3 noise) (- (:radius circ) r0))))))
