@@ -2,7 +2,8 @@
   "Geometric fitting."
   (:require [clojure.math.geometry :as geom])
   (:use [clojure.math.geometry :only [plus minus scale dot]]
-        clojure.math.internal.ejml))
+        clojure.math.internal.ejml)
+  (:import [org.ejml.data DenseMatrix64F]))
 
 
 (set! *unchecked-math* true)
@@ -27,7 +28,7 @@
 
 
 (defn- matrix1d-to-vector
-  [d]
+  [^DenseMatrix64F d]
   (vec (.getData d)))
 
 
